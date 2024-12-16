@@ -1,10 +1,10 @@
 import numpy as np
 
-from FuzzySetGenerator import FuzzySetGenerator
-from RuleGenerator import RuleGenerator
-from FuzzyInferenceSystem import FuzzyInferenceSystem
-from Validation import Validation
-from Optimization import Optimization
+from WangMendelAS.Base.FuzzySetGenerator import FuzzySetGenerator
+from WangMendelAS.Base.RuleGenerator import RuleGenerator
+from WangMendelAS.Base.FuzzyInferenceSystem import FuzzyInferenceSystem
+from WangMendelAS.Base.Validation import Validation
+from WangMendelAS.Base.Optimization import Optimization
 
 
 # Step 1: Generate training data
