@@ -3,21 +3,34 @@ import skfuzzy as fuzz
 
 #Handles the generation of triangular membership functions.
 class FuzzySetGenerator:
+    def __init__(self, n_sets, x_range=None, f_range=None):
+        self.n_sets = n_sets
+        self.x_range = x_range
+        self.f_range = f_range
 
-    def __init__(self, data_range, n_sets):
-        self.data_range = np.array(data_range, dtype=np.float64)  # Ensure data_range is a float array
-        self.n_sets = n_sets  # Number of fuzzy sets
-        self.fuzzy_sets = self._generate_triangular_sets()  # Generate fuzzy sets
-
-    # Generate triangular membership functions.
-    def _generate_triangular_sets(self):
-
-        # Ensure centers are evenly spaced within the data range
-        centers = np.linspace(min(self.data_range), max(self.data_range), self.n_sets)
-
-        # Create triangular membership functions
-        return [fuzz.trimf(self.data_range, [c - 1.5, c, c + 1.5]) for c in centers]
-
-    # Return the generated fuzzy sets.
     def get_sets(self):
-        return self.fuzzy_sets
+        if self.x_range:
+            return self._generate_sets(self.x_range)
+        elif self.f_range:
+            return self._generate_sets(self.f_range)
+        else:
+            raise ValueError("Either x_range or f_range must be provided.")
+
+    def _generate_sets(self, value_range):
+        # Generate fuzzy sets (for example, triangular memberships)
+        start, end = value_range
+        step = (end - start) / (self.n_sets - 1)
+        sets = []
+
+        for i in range(self.n_sets):
+            center = start + i * step
+            sets.append(self._generate_triangular_set(center, step))
+
+        return sets
+
+    @staticmethod
+    def _generate_triangular_set(center, step):
+        left = center - step
+        right = center + step
+        return [left, center, right]
+

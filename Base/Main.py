@@ -30,8 +30,13 @@ def main():
 
     # Step 3: Generate rules using Wang-Mendel
     print("Generating Wang-Mendel rules...")
-    rule_gen = RuleGenerator(input_sets, output_sets)
-    rules = rule_gen.generate_rules(x1_train, x2_train, f_train)
+    rule_gen = RuleGenerator(input_sets, output_sets, output_sets)  # Pass f_sets (same as output_sets here)
+    rules = rule_gen.generate_rules(
+        x1_train, x2_train, f_train,
+        x1_range=(-5, 5),
+        x2_range=(-5, 5),
+        f_range=(0, 50)
+    )
 
     # Step 4: Initialize Fuzzy Inference System (FIS)
     print("Initializing Fuzzy Inference System...")

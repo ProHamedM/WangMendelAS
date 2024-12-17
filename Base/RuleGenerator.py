@@ -3,9 +3,9 @@ import skfuzzy as fuzz
 
 # Manages Wang-Mendel rule extraction
 class RuleGenerator:
-    def __init__(self, x1_sets, x2_sets, f_sets):
-        self.x1_sets = x1_sets
-        self.x2_sets = x2_sets
+    def __init__(self, input_sets, output_sets, f_sets):
+        self.x1_sets = input_sets
+        self.x2_sets = output_sets
         self.f_sets = f_sets
         self.rules = []  # List of rules
 
@@ -16,12 +16,12 @@ class RuleGenerator:
         return memberships
 
     # Generate fuzzy rules using Wang-Mendel method
-    def generate_rules(self, x1, x2, f, x1_range, x2_range, f_range):
-        for i in range(len(x1)):
+    def generate_rules(self, x1_train, x2_train, f_train, x1_range, x2_range, f_range):
+        for i in range(len(x1_train)):
             # Fuzzify inputs and output
-            x1_memberships = self._fuzzify(x1[i], self.x1_sets, x1_range)
-            x2_memberships = self._fuzzify(x2[i], self.x2_sets, x2_range)
-            f_memberships = self._fuzzify(f[i], self.f_sets, f_range)
+            x1_memberships = self._fuzzify(x1_train[i], self.x1_sets, x1_range)
+            x2_memberships = self._fuzzify(x2_train[i], self.x2_sets, x2_range)
+            f_memberships = self._fuzzify(f_train[i], self.f_sets, f_range)
 
             # Get the indices of the highest membership degree
             x1_set = np.argmax(x1_memberships)

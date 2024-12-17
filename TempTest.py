@@ -33,7 +33,7 @@ fuzzy_system = FuzzyInferenceSystem(rules, x1_sets, x2_sets, f_sets, x1_range, x
 # Step 4: Validate the System
 test_size = 100  # Number of test data points
 validator = Validation(n_repeats=100)
-mean_mse = validator.validate(fuzzy_system, test_data=np.zeros(test_size))
+mean_mse = validator.validate(fuzzy_system, test_data_size=test_size)
 
 print(f"Final Mean Squared Error (MSE) after validation: {mean_mse:.4f}")
 

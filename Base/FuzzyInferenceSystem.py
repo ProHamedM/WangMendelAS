@@ -16,16 +16,16 @@ class FuzzyInferenceSystem:
     def predict(self, x1, x2):
         predictions = []
 
-        # If single inputs are passed, wrap them into arrays
-        if isinstance(x1, (int, float, np.float64)):
-            x1 = np.array([x1])
-        if isinstance(x2, (int, float, np.float64)):
-            x2 = np.array([x2])
-
         for i in range(len(x1)):
             # Fuzzify inputs
             x1_memberships = [fuzz.interp_membership(self.x1_range, s, x1[i]) for s in self.x1_sets]
             x2_memberships = [fuzz.interp_membership(self.x2_range, s, x2[i]) for s in self.x2_sets]
+
+            # Check for invalid memberships
+            if all(m == 0 for m in x1_memberships) or all(m == 0 for m in x2_memberships):
+                print(f"Warning: No valid membership values for X1={x1[i]}, X2={x2[i]}")
+                predictions.append(0)  # Default output
+                continue
 
             weighted_sum = 0
             total_weight = 0
@@ -43,10 +43,8 @@ class FuzzyInferenceSystem:
                 weighted_sum += weight * center_f
                 total_weight += weight
 
-            # Handle division by zero safely
-            if total_weight > 0:
-                predictions.append(weighted_sum / total_weight)
-            else:
-                predictions.append(0)  # Append 0 when no rules fire
+            # Avoid division by zero
+            prediction = weighted_sum / total_weight if total_weight > 0 else 0
+            predictions.append(prediction)
 
         return np.array(predictions)
