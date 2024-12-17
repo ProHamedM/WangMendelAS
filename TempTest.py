@@ -1,42 +1,39 @@
 import numpy as np
-from WangMendelAS.Base.RuleGenerator import RuleGenerator
 from WangMendelAS.Base.FuzzySetGenerator import FuzzySetGenerator
+from WangMendelAS.Base.RuleGenerator import RuleGenerator
+from WangMendelAS.Base.FuzzyInferenceSystem import FuzzyInferenceSystem
+from WangMendelAS.Base.Validation import Validation
 
-# Define input and output ranges
-x_range = np.linspace(-5, 5, 100)
-f_range = np.linspace(0, 50, 100)
-
-# Generate fuzzy sets for inputs and outputs
+# Step 1: Generate Fuzzy Sets
+x1_range = (-5, 5)
+x2_range = (-5, 5)
+f_range = (0, 50)
 n_sets = 7
-fuzzy_gen_x1 = FuzzySetGenerator(x_range, n_sets)
-fuzzy_gen_x2 = FuzzySetGenerator(x_range, n_sets)
-fuzzy_gen_f = FuzzySetGenerator(f_range, n_sets)
 
-x1_sets = fuzzy_gen_x1.get_sets()
-x2_sets = fuzzy_gen_x2.get_sets()
-f_sets = fuzzy_gen_f.get_sets()
+x1_fuzzy_gen = FuzzySetGenerator(x1_range, n_sets)
+x2_fuzzy_gen = FuzzySetGenerator(x2_range, n_sets)
+f_fuzzy_gen = FuzzySetGenerator(f_range, n_sets)
 
-# Generate training data
-n_train = 1681
-X1 = np.random.uniform(-5, 5, n_train)
-X2 = np.random.uniform(-5, 5, n_train)
-F = X1**2 + X2**2  # Output: F(x1, x2) = x1^2 + x2^2
+x1_sets = x1_fuzzy_gen.get_sets()
+x2_sets = x2_fuzzy_gen.get_sets()
+f_sets = f_fuzzy_gen.get_sets()
 
-# Initialize RuleGenerator
-rule_gen = RuleGenerator(x1_sets, x2_sets, f_sets)
+# Step 2: Generate Rules Using Training Data
+train_x1 = np.random.uniform(-5, 5, 100)
+train_x2 = np.random.uniform(-5, 5, 100)
+train_f = train_x1**2 + train_x2**2  # True function: f(x1, x2) = x1^2 + x2^2
 
-# Generate rules (explicitly pass variables with keyword arguments)
-rule_gen.generate_rules(
-    x1=X1,
-    x2=X2,
-    f=F,
-    x1_range=x_range,
-    x2_range=x_range,
-    f_range=f_range
-)
+rule_generator = RuleGenerator(x1_sets, x2_sets, f_sets)
+rule_generator.generate_rules(train_x1, train_x2, train_f, x1_range, x2_range, f_range)
+rules = rule_generator.get_rules()
 
-# Retrieve and display rules
-rules = rule_gen.get_rules()
-print(f"Generated {len(rules)} rules:")
-for rule in rules[:10]:  # Display the first 10 rules
-    print(f"IF x1 is Set {rule[0]} AND x2 is Set {rule[1]} THEN output is Set {rule[2]}")
+# Step 3: Create Fuzzy Inference System
+fuzzy_system = FuzzyInferenceSystem(rules, x1_sets, x2_sets, f_sets, x1_range, x2_range, f_range)
+
+# Step 4: Validate the System
+test_size = 100  # Number of test data points
+validator = Validation(n_repeats=100)
+mean_mse = validator.validate(fuzzy_system, test_data=np.zeros(test_size))
+
+print(f"Final Mean Squared Error (MSE) after validation: {mean_mse:.4f}")
+
