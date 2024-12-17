@@ -1,24 +1,20 @@
 import numpy as np
 
+# Handles test data generation, MSE calculation, and repetitions
 class Validation:
-    """
-    Handles test data generation, MSE calculation, and repetitions.
-    """
     def __init__(self, n_repeats=100):
         self.n_repeats = n_repeats  # Number of repetitions for MSE calculation
 
-    def calculate_mse(self, true_values, predicted_values):
-        """
-        Calculate Mean Squared Error (MSE).
-        """
+    # Calculate Mean Squared Error (MSE).
+    @staticmethod
+    def calculate_mse(true_values, predicted_values):
         return np.mean((true_values - predicted_values)**2) / 2
 
+    # Validate the fuzzy system with test data
     def validate(self, fuzzy_system, test_data):
-        """
-        Validate the fuzzy system with test data.
-        """
         mse_list = []
         for _ in range(self.n_repeats):
+
             # Generate random test inputs
             test_x1 = np.random.uniform(-5, 5, len(test_data))
             test_x2 = np.random.uniform(-5, 5, len(test_data))
