@@ -5,13 +5,17 @@ import skfuzzy as fuzz
 class FuzzySetGenerator:
 
     def __init__(self, data_range, n_sets):
-        self.data_range = data_range  # Range of values for the variable
-        self.n_sets = n_sets  # Number of fuzzy sets per variable
+        self.data_range = np.array(data_range, dtype=np.float64)  # Ensure data_range is a float array
+        self.n_sets = n_sets  # Number of fuzzy sets
         self.fuzzy_sets = self._generate_triangular_sets()  # Generate fuzzy sets
 
     # Generate triangular membership functions.
     def _generate_triangular_sets(self):
-        centers = np.linspace(self.data_range[0], self.data_range[-1], self.n_sets)
+
+        # Ensure centers are evenly spaced within the data range
+        centers = np.linspace(min(self.data_range), max(self.data_range), self.n_sets)
+
+        # Create triangular membership functions
         return [fuzz.trimf(self.data_range, [c - 1.5, c, c + 1.5]) for c in centers]
 
     # Return the generated fuzzy sets.
