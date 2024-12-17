@@ -1,10 +1,8 @@
 import numpy as np
 import skfuzzy as fuzz
 
+# Manage fuzzy inference and prediction
 class FuzzyInferenceSystem:
-    """
-    Manages fuzzy inference and prediction.
-    """
     def __init__(self, rules, x1_sets, x2_sets, f_sets, x1_range, x2_range, f_range):
         self.rules = rules
         self.x1_sets = x1_sets
@@ -14,16 +12,14 @@ class FuzzyInferenceSystem:
         self.x2_range = x2_range
         self.f_range = f_range
 
-    def predict(self, X1, X2):
-        """
-        Predict outputs for given inputs using fuzzy inference.
-        """
+    # Predict outputs for given inputs using fuzzy inference
+    def predict(self, x1, x2):
         predictions = []
 
-        for i in range(len(X1)):
+        for i in range(len(x1)):
             # Fuzzify inputs
-            x1_memberships = [fuzz.interp_membership(self.x1_range, s, X1[i]) for s in self.x1_sets]
-            x2_memberships = [fuzz.interp_membership(self.x2_range, s, X2[i]) for s in self.x2_sets]
+            x1_memberships = [fuzz.interp_membership(self.x1_range, s, x1[i]) for s in self.x1_sets]
+            x2_memberships = [fuzz.interp_membership(self.x2_range, s, x2[i]) for s in self.x2_sets]
 
             weighted_sum = 0
             total_weight = 0
