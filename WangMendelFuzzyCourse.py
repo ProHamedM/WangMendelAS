@@ -1,6 +1,7 @@
-import numpy as numpy
+import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pandas
+import pandas as pd
+import random
 
 # Modify the input and output ranges
 xone_min, xone_max = -5, 5
@@ -8,85 +9,122 @@ xtwo_min, xtwo_max = -5, 5
 f_min, f_max = 0, 50
 
 # Produce the training data grid
-xone = numpy.linspace(xone_min, xone_max, 41)  # Generate 41 values for x1
-xtwo = numpy.linspace(xtwo_min, xtwo_max, 41)  # Generate 41 values for x2
-x_one, x_two = numpy.meshgrid(xone, xtwo)
+xone = np.linspace(xone_min, xone_max, 41)  # Generate 41 values for x1
+xtwo = np.linspace(xtwo_min, xtwo_max, 41)  # Generate 41 values for x2
+x_one, x_two = np.meshgrid(xone, xtwo)
 target_function = x_one ** 2 + x_two ** 2  # Target function
 
-# Define the fuzzy system with triangular membership functions
+
 def triangular_membership_function(x, num_sets, x_min, x_max):
-    # Generate triangular membership functions.
+    """Generate triangular membership functions."""
     step = (x_max - x_min) / (num_sets - 1)
-    centers = numpy.linspace(x_min, x_max, num_sets)
-    membership_functions_list = numpy.maximum(0, 1 - numpy.abs(x[:, None] - centers) / step)
+    centers = np.linspace(x_min, x_max, num_sets)
+    membership_functions_list = np.maximum(0, 1 - np.abs(x[:, None] - centers) / step)
     return centers, membership_functions_list
 
-# Rule production: Wang-Mendel fuzzy rule
-def generate_rules(xone_centers, xtwo_centers, function_centers):
-    # Generate Wang-Mendel fuzzy rules using broadcasting.
-    x_one, x_two = numpy.meshgrid(xone_centers, xtwo_centers)
-    rule_outputs = x_one**2 + x_two**2
-    rule_outputs = function_centers[numpy.argmin(numpy.abs(function_centers[:, None, None] - rule_outputs), axis=0)]
-    return numpy.array(list(zip(x_one.flatten(), x_two.flatten(), rule_outputs.flatten())))
 
-# Defuzzification: center-average defuzzifier
+def generate_rules(xone_centers, xtwo_centers, function_centers):
+    """Generate Wang-Mendel fuzzy rules."""
+    x_1, x_2 = np.meshgrid(xone_centers, xtwo_centers)
+    rule_outputs = x_1**2 + x_2**2
+    rule_outputs = function_centers[np.argmin(np.abs(function_centers[:, None, None] - rule_outputs), axis=0)]
+    return np.array(list(zip(x_1.flatten(), x_2.flatten(), rule_outputs.flatten())))
+
+
 def center_average_defuzzifier(x1_val, x2_val, rules, num_sets):
+    """Defuzzification: center-average defuzzifier."""
     xone_centers = rules[:, 0]
     xtwo_centers = rules[:, 1]
     function_centers = rules[:, 2]
 
-    # Compute membership degrees for x1 and x2
     step = (xone_max - xone_min) / (num_sets - 1)
-    membership_degree_xone = numpy.maximum(0, 1 - numpy.abs(x1_val - xone_centers) / step)
-    membership_degree_xtwo = numpy.maximum(0, 1 - numpy.abs(x2_val - xtwo_centers) / step)
+    membership_degree_xone = np.maximum(0, 1 - np.abs(x1_val - xone_centers) / step)
+    membership_degree_xtwo = np.maximum(0, 1 - np.abs(x2_val - xtwo_centers) / step)
 
-    # Compute rule activation and defuzzified output
-    rule_strengths = numpy.minimum(membership_degree_xone, membership_degree_xtwo)
-    numerator = numpy.sum(rule_strengths * function_centers)
-    denominator = numpy.sum(rule_strengths)
+    rule_strengths = np.minimum(membership_degree_xone, membership_degree_xtwo)
+    numerator = np.sum(rule_strengths * function_centers)
+    denominator = np.sum(rule_strengths)
     return numerator / denominator if denominator != 0 else 0
 
-# Calculate MSE Function (Minimum Mean Squared Error)
+
 def calculate_mse(y_actual, y_predicted):
-    return numpy.mean((numpy.array(y_actual) - numpy.array(y_predicted)) ** 2)
+    """Calculate MSE."""
+    return np.mean((np.array(y_actual) - np.array(y_predicted)) ** 2)
 
-# Optimize to reduce error
-def optimize_fuzzy_system():
-    min_mse = float('inf')
-    optimal_number_sets = 0
-    optimal_fuzzy_rules = None
 
-    # Search for the best number of fuzzy sets
-    for num_sets in range(2, 101):  # Searching between 2 and 100 fuzzy sets
-        xone_centers, _ = triangular_membership_function(xone, num_sets, xone_min, xone_max)
-        xtwo_centers, _ = triangular_membership_function(xtwo, num_sets, xtwo_min, xtwo_max)
-        function_centers, _ = triangular_membership_function(target_function.flatten(), num_sets, f_min, f_max)
+def simulated_annealing():
+    """Optimize using simulated annealing."""
+    print("Starting simulated annealing optimization...")
 
+    # Initial configuration
+    best_rules = None
+    current_sets = random.randint(2, 100)  # Start with a random number of sets
+    best_sets = current_sets
+    current_temp = 100  # Initial temperature
+    cooling_rate = 0.95
+    min_temp = 1e-3
+    best_mse = float("inf")
+    history = []
+
+    while current_temp > min_temp:
+        # Generate fuzzy sets and rules
+        xone_centers, _ = triangular_membership_function(xone, current_sets, xone_min, xone_max)
+        xtwo_centers, _ = triangular_membership_function(xtwo, current_sets, xtwo_min, xtwo_max)
+        function_centers, _ = triangular_membership_function(target_function.flatten(), current_sets, f_min, f_max)
         rules = generate_rules(xone_centers, xtwo_centers, function_centers)
 
         # Calculate train error
-        train_function_predicted = numpy.array([
-            center_average_defuzzifier(x1_val, x2_val, rules, num_sets)
+        train_function_predicted = np.array([
+            center_average_defuzzifier(x1_val, x2_val, rules, current_sets)
             for x1_val, x2_val in zip(x_one.flatten(), x_two.flatten())
         ])
-        train_mse_function = calculate_mse(target_function.flatten(), train_function_predicted)
+        mse = calculate_mse(target_function.flatten(), train_function_predicted)
 
-        # Track progress during the 100 iterations
-        print(f"Iteration {num_sets}: Train MSE = {train_mse_function:.4f}")
+        # Update history
+        history.append({"Number of Sets": current_sets, "MSE": mse})
 
         # Check if this is the best configuration
-        if train_mse_function < min_mse:
-            min_mse = train_mse_function
-            optimal_number_sets = num_sets
-            optimal_fuzzy_rules = rules
+        if mse < best_mse:
+            best_mse = mse
+            best_sets = current_sets
+            best_rules = rules
 
-    return optimal_fuzzy_rules, optimal_number_sets
+        # Simulated Annealing Probability
+        next_sets = current_sets + random.choice([-1, 1])  # Neighboring solution
+        next_sets = max(2, min(next_sets, 100))  # Keep within bounds
 
-# Run optimization
-optimal_rules, optimal_num_sets = optimize_fuzzy_system()
+        delta_mse = mse - best_mse
+        if delta_mse < 0 or np.exp(-delta_mse / current_temp) > random.random():
+            current_sets = next_sets
+
+        # Cool down
+        current_temp *= cooling_rate
+
+        # log
+        print(f"Temp: {current_temp:.4f}, Number of Sets: {current_sets}, MSE: {mse:.4f}")
+
+    return best_rules, best_sets, best_mse, history
+
+
+# Run Simulated Annealing
+optimal_rules, optimal_num_sets, optimal_mse, iteration_results = simulated_annealing()
+
+# Generate Iterations Table
+iterations_table = pd.DataFrame(iteration_results)
+iterations_table.to_excel("Iterations_and_MSEs.xlsx", index=False)  # Save to Excel
+print("Saved iterations and MSEs table to Iterations_and_MSEs.xlsx")
+
+# Generate Fuzzy Rules Table
+fuzzy_rules_table = pd.DataFrame({
+    "x1 Center": optimal_rules[:, 0],
+    "x2 Center": optimal_rules[:, 1],
+    "Output (Fuzzy Set)": optimal_rules[:, 2]
+})
+fuzzy_rules_table.to_excel("Fuzzy_Rules.xlsx", index=False)  # Save to Excel
+print("Saved fuzzy rules table to Fuzzy_Rules.xlsx")
 
 # Evaluate optimal fuzzy system
-train_f_predicted = numpy.array([
+train_f_predicted = np.array([
     center_average_defuzzifier(x1_val, x2_val, optimal_rules, optimal_num_sets)
     for x1_val, x2_val in zip(x_one.flatten(), x_two.flatten())
 ])
@@ -95,17 +133,17 @@ print(f"\nFinal Optimal Fuzzy Sets: {optimal_num_sets}")
 print(f"Final Train MSE: {train_mse:.4f}")
 
 # Test data
-numpy.random.seed(42)
-test_x1 = numpy.random.uniform(xone_min, xone_max, 168)
-test_x2 = numpy.random.uniform(xtwo_min, xtwo_max, 168)
+np.random.seed(42)
+test_x1 = np.random.uniform(xone_min, xone_max, 168)
+test_x2 = np.random.uniform(xtwo_min, xtwo_max, 168)
 test_f_actual = test_x1**2 + test_x2**2
-test_f_predicted = numpy.array([
+test_f_predicted = np.array([
     center_average_defuzzifier(x1, x2, optimal_rules, optimal_num_sets)
     for x1, x2 in zip(test_x1, test_x2)
 ])
 
 test_mse = calculate_mse(test_f_actual, test_f_predicted)
-test_mae = numpy.mean(numpy.abs(numpy.array(test_f_actual) - numpy.array(test_f_predicted)))
+test_mae = np.mean(np.abs(np.array(test_f_actual) - np.array(test_f_predicted)))
 print(f"Final Test MSE: {test_mse:.4f}")
 print(f"Final Mean Absolute Error (Test): {test_mae:.4f}")
 
@@ -119,20 +157,3 @@ ax.set_xlabel("x1")
 ax.set_ylabel("x2")
 ax.set_zlabel("Fuzzy Output")
 plt.show()
-
-# Create a Table of x1, x2, and Generated Fuzzy Sets
-x_one_centers, _ = triangular_membership_function(xone, optimal_num_sets, xone_min, xone_max)
-x_two_centers, _ = triangular_membership_function(xtwo, optimal_num_sets, xtwo_min, xtwo_max)
-f_centers, _ = triangular_membership_function(target_function.flatten(), optimal_num_sets, f_min, f_max)
-
-table_data = []
-for x_one_center in x_one_centers:
-    for x_two_center in x_two_centers:
-        # Calculate the corresponding fuzzy output for this x1, x2 combination
-        function_output = f_centers[numpy.argmin(numpy.abs(f_centers - (x_one_center ** 2 + x_two_center ** 2)))]
-        table_data.append({"x1": x_one_center, "x2": x_two_center, "Output (Fuzzy Set)": function_output})
-
-# Convert the data to a DataFrame
-dataframe = pandas.DataFrame(table_data)
-print("Generated Fuzzy Sets Table:")
-print(dataframe)
